@@ -1,0 +1,11 @@
+<% field(:name){
+	show_as{ |f|
+		%>Show <%=f.foo_proc.call%> <%=default_show%><%
+	}
+	edit_as{ |f|
+		%>Edit <%=f.foo_proc.call%> <%=default_edit%><%
+	}
+	hide_as{ |f|
+		%>Hide <%=f.foo_proc.call%> <%=default_hide%><%
+	}
+}%>

@@ -1,0 +1,12 @@
+<%- field(:name){
+	edit_as{
+		%>editing name once<%
+	}
+	show_as{
+		%>showing name once<%		
+	}	
+} -%>
+<%- field(:name){
+	edit_as("editing name twice")
+	show_as("showing name twice")
+} -%>

@@ -1,0 +1,13 @@
+<% field(:fur_color){}%> <% field(:name){}%>
+<% field(:fur_color){}%>
+<% field(:name){}%>
+<% field(:name){
+	show_as(default_show)
+}%>
+<% field(:name){
+	show_as{ |f|
+		puts "default_show: " + default_show.inspect
+		
+		%><%=f.display_proc.call(f.reader_proc.call(@squirrel))%><%
+	}
+} %>

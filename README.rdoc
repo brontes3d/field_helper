@@ -1,0 +1,154 @@
+== The +field+ view tag
+
+The +field+ tag in it's most general form is basically the same as +text_field+
+
+Instead of doing
+	<% form_for(:user) do |f| %>
+		<%=f.text_field :name%>
+	<% end %>
+	
+You can do:
+	<% form_for(:user) do |f| %>
+		<%field(:name){} %>
+	<% end %>
+
+However, the +field+ tag is more aware of it's context.  In the same way that the default RESTful scaffolding shares a '_form' partial between the 'new' and 'edit' views.  You can use field to enable the sharing of a '_fields' partial between that '_form' and the 'show' view.
+
+_form.html.erb
+	<% form_for(:user) do %>
+		<%=render :partial => 'fields'%>	
+	<% end %>
+
+show.html.erb
+	<%=render :partial => 'fields'%>
+
+_fields.html.erb
+	<%field(:first_name){}%>
+	<%field(:last_name){}%>
+	...etc..
+	
+When +field+ is called in the context of the 'show' action, it knows to display it's +show_as+ view. (whose default is <tt>attribute.to_s</tt>) But when +field+ is called in the context of the 'edit' or 'new' actions, it knows to display it's +edit_at+ view. (whose default is simply an appropriate +text_field+ )
+
+== +field+ tag view modes
+
+
+Every field has 3 view modes +show_as+, +edit_as+, and +hide_as+.  (See: FieldHelper.show_as , FieldHelper.edit_as , FieldHelper.hide_as)
+
+And field_helper provides hooks to allow controllers and permission engines to determine which view mode should be used on a per-action and per-field basis. (See: FieldHelper.determine_field_show_edit_or_deny)
+
+You can define alternatives to the default view modes by naming them inside the block passed to +field+
+
+Example:
+	<p><b>Username:</b> 
+	<%field(:username){}%></p>
+	
+	<p><b>Birthday:</b> 
+	<% field(:birthday){
+		show_as(@user.birthday.strftime("%a %b %d %Y"))
+		edit_as{
+			%>
+				<%=render :partial => 'date_selector', :user => @user %>
+			<%
+		}
+	} %></p>
+
+Note the 2 different ways to do so.  
+
+* Passing a single argument specifies the string to display for that view mode. (as done with <tt>:username</tt> in the example)
+
+* Calling with a block captures a proc for later use if needed.  The proc's execution is expected to result in the text to display for that view mode. (as done with <tt>:birthday</tt> in the example) 
+
+Procs are more flexible and won't be executed unless they correspond to the active view mode, but sending a single argument is more concise and require fewer <%'s.
+
+== +field+ tag view mode defaults (using field_defs)
+
+Although not required, field_helper integrates with the field_defs plugin to allow the specification of +show_as+ , +edit_as+ , and +hide_as+ on a per field basis (and outside the context of a view).
+
+Example:
+	
+	FieldDefs.new(User) do
+    
+	    field(:description).edit_proc do |view, user|
+	     	view.text_area('user', :description)
+	    end.hide_proc do |user|
+			"You are not allowed to view this user's description"
+		end
+		
+	    field(:birthday).display_proc do |bday|
+			bday.strftime("%a %b %d %Y")
+  		end
+
+	end
+	
+If a given +field+ view tag references a field that has a corresponding FieldDefs +field+ definition. (Where that FieldDefs instance is accessible by calling +field_defs+ in the current context)  Then here is how the contents to display are determined for each view mode:
+
+=== View Mode: +show_as+ 
+
+Combines the +reader_proc+ and +display_proc+ to determine the value to display.  The default +reader_proc+ is <tt>send(field_name)</tt> and the default +display_proc+ is +to_s+.  
+
+==== Example:
+
+If current_object were a User and that user's name was "bob"
+
+Then:
+	<% field(:name){} %>
+would perform show_as by calling current_object.name and then calling to_s on the result.  The result would be "bob"
+
+But if:
+	field(:name).display_proc do |name|
+		"me llamo #{name}"
+	end
+Then:
+	<% field(:name){} %>
+would perform show_as by calling current_object.name and then passing the result to the above display proc.  The result would be "me llamo bob"
+
+
+
+=== View Mode: +edit_as+ 
+
+Calls the +edit_proc+ to determine the value to display.  The default +edit_proc+ calls +text_field+.
+
+==== Example:
+
+If current_object were a User and that user's name was "bob"
+
+Then:
+	<% field(:name){} %>
+would perform edit_as by calling text_field with the field_name and current_object.
+
+But if:
+	field(:name).edit_proc do |view, user|
+		view.text_area('user', :description)
+	end
+Then:
+	<% field(:name){} %>
+	
+would display a text area instead.
+
+
+=== View Mode: +hide_as+ 
+
+Calls the +hide_proc+ to determine the value to display.  The default +hide_proc+ returns an empty string.
+
+==== Example:
+
+If current_object were a User and that user's name was "bob"
+
+Then:
+	<% field(:name){} %>
+would perform hide_as by displaying empty string.
+
+But if:
+	field(:name).hide_proc do |view, user|
+		"his name is a secret"
+	end
+Then:
+	<% field(:name){} %>
+	
+would display "his name is a secret" instead.
+
+	
+
+Copyright (c) 2008-2010 3M. All rights reserved. Released under the MIT license.
+
+Authored by Jacob Burkhart.

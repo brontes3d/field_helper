@@ -1,0 +1,15 @@
+<% field(:name){ |name_field|
+	name_field.show_as{
+		field(:name){}
+		field(:weight){ |weight_field|
+			weight_field.show_as(" #{@squirrel.weight} lbs.")
+		}
+	}
+	name_field.edit_as{
+		field(:name){}
+		field(:fur_color){ |fur_field|
+			fur_field.edit_as("(edit fur field)")
+		}
+	}
+}
+%>
